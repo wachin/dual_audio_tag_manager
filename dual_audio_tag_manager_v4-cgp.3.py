@@ -1,11 +1,11 @@
 import sys, os, base64
 from PyQt6.QtWidgets import (
-    QApplication, QWidget, QTreeView, QLabel,
+    QApplication, QWidget, QTreeView, QLabel, QToolButton,
     QVBoxLayout, QHBoxLayout, QPushButton, QTextEdit,
-    QSplitter, QGroupBox, QMenuBar, QFrame, QSizePolicy
+    QSplitter, QGroupBox, QMenuBar, QScrollArea
 )
-from PyQt6.QtGui import QPixmap, QFileSystemModel, QAction, QCursor
-from PyQt6.QtCore import Qt, QSettings, QEvent
+from PyQt6.QtGui import QPixmap, QFileSystemModel, QAction
+from PyQt6.QtCore import Qt, QSettings
 from mutagen import File
 from mutagen.id3 import ID3, APIC
 from mutagen.flac import Picture
@@ -135,146 +135,43 @@ Compositor: {tags["composer"]}
 """
         self.text.setText(info)
 
-# ------------------ PATH NAVIGATOR ------------------
+# ---------- Barra de ruta (breadcrumb) -----------
 
-class PathNavigator(QFrame):
-    """Barra de navegación estilo Windows que muestra la ruta completa con directorios clicables"""
-    
-    def __init__(self, tree_view, file_model):
+class PathBar(QWidget):
+    def __init__(self, panel):
         super().__init__()
-        self.tree = tree_view
-        self.model = file_model
+        self.panel = panel
         self.layout = QHBoxLayout(self)
-        self.layout.setContentsMargins(5, 2, 5, 2)
-        self.layout.setSpacing(2)  # Menor espaciado
-        
-        # Estilo de la barra
-        self.setStyleSheet("""
-            PathNavigator {
-                background-color: #f0f0f0;
-                border: 1px solid #cccccc;
-                border-radius: 3px;
-            }
-            QLabel {
-                padding: 2px 4px;
-                border-radius: 2px;
-                font-size: 9pt;
-            }
-            QLabel:hover {
-                background-color: #e1e1e1;
-                text-decoration: underline;
-            }
-            QLabel#separator {
-                color: #999999;
-                padding: 0px 2px;
-            }
-            QLabel#drive_label {
-                min-width: 30px;
-                max-width: 40px;
-                text-align: center;
-            }
-            QLabel#folder_label {
-                min-width: 0px;
-                max-width: 150px;
-                elide: right;  # Para textos largos
-            }
-        """)
-        
-        self.update_path("")
-    
-    def update_path(self, path):
-        """Actualiza la barra de navegación con la nueva ruta"""
-        # Limpiar los elementos anteriores
-        for i in reversed(range(self.layout.count())):
-            widget = self.layout.itemAt(i).widget()
-            if widget:
-                widget.deleteLater()
-        
+        self.layout.setContentsMargins(4,4,4,4)
+        self.layout.setSpacing(2)
+
+    def set_path(self, path):
+        # borrar botones viejos
+        while self.layout.count():
+            w = self.layout.takeAt(0).widget()
+            if w:
+                w.deleteLater()
+
         if not path:
             return
-        
-        # Convertir la ruta a una lista de partes
-        parts = []
-        
-        # Para rutas de Windows
-        if os.path.isabs(path) and ':' in path:
-            # Manejar unidad de disco (ej: "C:")
-            drive = path[0:2]  # Solo "C:" en lugar de "C:\"
-            parts.append(drive)
-            
-            # Obtener el resto de la ruta sin la unidad
-            remaining = path[3:] if len(path) > 3 else ""
-            if remaining:
-                parts.extend([p for p in remaining.split(os.sep) if p])
-        else:
-            # Para rutas relativas o Unix
-            parts = [p for p in path.split(os.sep) if p]
-        
-        # Crear etiquetas para cada parte del camino
-        for i, part in enumerate(parts):
-            if part:  # Saltar partes vacías
-                # Crear etiqueta clicable
-                label = QLabel(part)
-                label.setCursor(QCursor(Qt.CursorShape.PointingHandCursor))
-                label.setToolTip(f"Clic para ir a: {os.sep.join(parts[:i+1])}")
-                label.mousePressEvent = self.create_click_handler(parts[:i+1])
-                
-                # Aplicar estilos diferentes según el tipo de elemento
-                if i == 0 and ':' in part:  # Es la unidad de disco
-                    label.setObjectName("drive_label")
-                    label.setText(part)  # Solo muestra "C:" en lugar de "C:\"
-                else:
-                    label.setObjectName("folder_label")
-                
-                # Guardar la ruta completa como propiedad
-                full_path = self.build_full_path(parts[:i+1])
-                label.setProperty("full_path", full_path)
-                
-                self.layout.addWidget(label)
-                
-                # Agregar separador (excepto después del último)
-                if i < len(parts) - 1:
-                    separator = QLabel("›")
-                    separator.setObjectName("separator")
-                    separator.setSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Fixed)
-                    self.layout.addWidget(separator)
-        
-        # Agregar espacio flexible al final
+
+        parts = os.path.normpath(path).split(os.sep)
+
+        # Manejar correctamente "C:\"
+        current = parts[0] + os.sep
+        for part in parts[1:]:
+            current = os.path.join(current, part)
+
+            btn = QToolButton()
+            btn.setText(part)
+            btn.setAutoRaise(True)
+            btn.clicked.connect(lambda checked=False, p=current: self.panel.go_to(p))
+            self.layout.addWidget(btn)
+
+            sep = QLabel(">")
+            self.layout.addWidget(sep)
+
         self.layout.addStretch()
-    
-    def build_full_path(self, parts):
-        """Construye la ruta completa a partir de las partes"""
-        if not parts:
-            return ""
-        
-        # Si la primera parte es una unidad (ej: "C:")
-        if ':' in parts[0]:
-            if len(parts) == 1:
-                return parts[0] + "\\"  # Solo unidad: "C:\"
-            else:
-                # Unidad + resto del camino
-                return parts[0] + "\\" + "\\".join(parts[1:])
-        else:
-            # Para rutas Unix o relativas
-            return os.sep.join(parts)
-    
-    def create_click_handler(self, path_parts):
-        """Crea un manejador de clic para navegar al directorio"""
-        def handler(event):
-            if event.button() == Qt.MouseButton.LeftButton:
-                full_path = self.build_full_path(path_parts)
-                self.navigate_to_path(full_path)
-            event.accept()
-        return handler
-    
-    def navigate_to_path(self, path):
-        """Navega al directorio especificado en el árbol"""
-        if os.path.exists(path):
-            index = self.model.index(path)
-            if index.isValid():
-                self.tree.setCurrentIndex(index)
-                self.tree.scrollTo(index)
-                self.tree.expand(index.parent())
 
 # ------------------ PANEL ------------------
 
@@ -292,12 +189,6 @@ class Panel(QWidget):
         self.tree.setModel(self.model)
         self.tree.setRootIndex(self.model.index(self.model.rootPath()))
         self.tree.clicked.connect(self.on_select)
-        
-        # Barra de navegación estilo Windows
-        self.path_navigator = PathNavigator(self.tree, self.model)
-        
-        # Conectar la selección del árbol para actualizar la barra de navegación
-        self.tree.selectionModel().selectionChanged.connect(self.on_selection_changed)
 
         # Hacer que la columna "Name" sea grande
         self.tree.setColumnWidth(0, 400)   # Name
@@ -319,9 +210,11 @@ class Panel(QWidget):
         self.inspector = AudioInspector()
         self.inspector.cover.resizeEvent = lambda e: self.inspector.resize_cover()
 
-        files_box = QGroupBox("")
+        self.pathbar = PathBar(self)
+
+        files_box = QGroupBox()
         fl = QVBoxLayout(files_box)
-        fl.addWidget(self.path_navigator)  # Agregar barra de navegación
+        fl.addWidget(self.pathbar)
         fl.addWidget(self.tree)
 
         cover_box = QGroupBox("Administrador de imágenes de carátula")
@@ -338,54 +231,48 @@ class Panel(QWidget):
 
         layout = QVBoxLayout(self)
         layout.addWidget(self.splitter)
-    
-    def on_selection_changed(self):
-        """Actualiza la barra de navegación cuando cambia la selección"""
-        index = self.tree.currentIndex()
-        if index.isValid():
-            path = self.model.filePath(index)
-            if os.path.isdir(path):
-                self.path_navigator.update_path(path)
-            else:
-                # Si es un archivo, mostrar la ruta de su directorio padre
-                parent_path = os.path.dirname(path)
-                self.path_navigator.update_path(parent_path)
 
-    def on_directory_loaded(self, path):
-        if hasattr(self, "pending_scroll"):
-            self.tree.verticalScrollBar().setValue(self.pending_scroll)
-            del self.pending_scroll
-        
-        # Actualizar la barra de navegación cuando se carga un directorio
-        self.path_navigator.update_path(path)
+    def refresh_selection(self):
+        idx = self.tree.currentIndex()
+        if idx.isValid():
+            self.on_select(idx)
 
-    def on_select(self, index):
-        path = self.model.filePath(index)
-        self.current_file = path
-        self.inspector.show_audio(path)
-        
-        # Actualizar la barra de navegación
-        if os.path.isdir(path):
-            self.path_navigator.update_path(path)
-        else:
-            parent_path = os.path.dirname(path)
-            self.path_navigator.update_path(parent_path)
+    def go_to(self, path):
+        idx = self.model.index(path)
+        if idx.isValid():
+            self.tree.setCurrentIndex(idx)
+            self.tree.scrollTo(idx)
+            self.pathbar.set_path(path)
 
     def save_scroll(self, settings, prefix):
         """Guarda la posición actual del scroll"""
         scroll_value = self.tree.verticalScrollBar().value()
         settings.setValue(f"{prefix}_scroll", scroll_value)
 
+    def on_directory_loaded(self, path):
+        if hasattr(self, "pending_scroll"):
+            self.tree.verticalScrollBar().setValue(self.pending_scroll)
+            del self.pending_scroll
+
+    def on_select(self, index):
+        path = self.model.filePath(index)
+        self.current_file = path
+        self.inspector.show_audio(path)
+
+        if os.path.isdir(path):
+            self.pathbar.set_path(path)
+        else:
+            self.pathbar.set_path(os.path.dirname(path))
+
     def save_columns(self, settings, prefix):
-        """Guarda el ancho de las columnas"""
         header = self.tree.header()
         settings.setValue(prefix + "_name_width", header.sectionSize(0))
 
     def restore_columns(self, settings, prefix):
-        """Restaura el ancho de las columnas"""
         w = settings.value(prefix + "_name_width")
         if w:
             self.tree.setColumnWidth(0, int(w))
+
 
 # ------------------ About ------------------
 
@@ -459,12 +346,26 @@ class MainWindow(QWidget):
         main.setMenuBar(menu)
         main.addLayout(content)
 
-        self.settings = QSettings("Washington", "DualAudioTagManager")
+        config_dir = QSettings().fileName()
+        config_path = os.path.join(os.path.dirname(config_dir), "DualAudioTagManager")
+
+        os.makedirs(config_path, exist_ok=True)
+
+        self.settings = QSettings(
+            os.path.join(config_path, "settings.ini"),
+            QSettings.Format.IniFormat
+        )
 
         self.left.pending_scroll = int(self.settings.value("left_scroll", 0))
         self.right.pending_scroll = int(self.settings.value("right_scroll", 0))
 
         self.restoreGeometry(self.settings.value("main_geometry", b""))
+
+        if self.settings.value("was_maximized", True, type=bool):
+            self.showMaximized()
+        else:
+            self.show()
+
         self.left.splitter.restoreState(self.settings.value("left_split", b""))
         self.right.splitter.restoreState(self.settings.value("right_split", b""))
 
@@ -477,9 +378,14 @@ class MainWindow(QWidget):
                 idx = panel.model.index(path)
                 panel.tree.setCurrentIndex(idx)
                 panel.tree.scrollTo(idx)
+                panel.pathbar.set_path(path)
 
         # aplicar scroll DESPUÉS de que Qt termine de posicionar la vista
         QTimer.singleShot(0, self.restore_scroll)
+
+    def refresh_panels(self):
+        self.left.refresh_selection()
+        self.right.refresh_selection()
 
     def restore_scroll(self):
         # Esperar un momento para que todo se cargue
@@ -506,6 +412,8 @@ class MainWindow(QWidget):
         QTimer.singleShot(100, apply_scroll)  # Después de 100ms
         QTimer.singleShot(500, apply_scroll)  # Después de 500ms
 
+        QTimer.singleShot(600, self.refresh_panels)
+
     def set_cover_size(self, size):
         for p in (self.left, self.right):
             p.inspector.cover.setMinimumSize(size,size)
@@ -531,6 +439,8 @@ class MainWindow(QWidget):
 
         self.left.save_columns(self.settings, "left")
         self.right.save_columns(self.settings, "right")
+
+        self.settings.setValue("was_maximized", self.isMaximized())
 
     def copy_cover(self):
         src = getattr(self.left,"current_file",None)
@@ -568,5 +478,4 @@ class MainWindow(QWidget):
 
 app = QApplication(sys.argv)
 w = MainWindow()
-w.showMaximized()
 app.exec()

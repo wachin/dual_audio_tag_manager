@@ -232,6 +232,11 @@ class Panel(QWidget):
         layout = QVBoxLayout(self)
         layout.addWidget(self.splitter)
 
+    def refresh_selection(self):
+        idx = self.tree.currentIndex()
+        if idx.isValid():
+            self.on_select(idx)
+
     def go_to(self, path):
         idx = self.model.index(path)
         if idx.isValid():
@@ -364,6 +369,10 @@ class MainWindow(QWidget):
         # aplicar scroll DESPUÉS de que Qt termine de posicionar la vista
         QTimer.singleShot(0, self.restore_scroll)
 
+    def refresh_panels(self):
+        self.left.refresh_selection()
+        self.right.refresh_selection()
+
     def restore_scroll(self):
         # Esperar un momento para que todo se cargue
         def apply_scroll():
@@ -388,6 +397,8 @@ class MainWindow(QWidget):
         QTimer.singleShot(0, apply_scroll)  # Inmediatamente
         QTimer.singleShot(100, apply_scroll)  # Después de 100ms
         QTimer.singleShot(500, apply_scroll)  # Después de 500ms
+
+        QTimer.singleShot(600, self.refresh_panels)
 
     def set_cover_size(self, size):
         for p in (self.left, self.right):
