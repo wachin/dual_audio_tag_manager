@@ -185,6 +185,48 @@ Puedes:
 
 ---
 
+## 📐 Ajustar el ancho de la columna “Name”
+
+El programa usa un explorador de archivos interno parecido al Explorador de Windows o Krusader.
+Por defecto, la columna **“Name”** (Nombre de archivo o carpeta) es la más importante, por lo que se le da más espacio.
+
+Si quieres cambiar cuánto espacio ocupa esa columna al iniciar el programa, haz lo siguiente:
+
+1. Abre el archivo:
+
+```
+dual_audio_tag_manager.py
+```
+
+2. Busca la clase:
+
+```
+class Panel(QWidget):
+```
+
+3. Dentro de esa clase busca una línea que dice algo parecido a:
+
+```python
+self.tree.setColumnWidth(0, 400)
+```
+
+Ese número representa el ancho en píxeles de la columna **Name**.
+
+Puedes cambiarlo, por ejemplo:
+
+```python
+self.tree.setColumnWidth(0, 300)   # más angosta
+self.tree.setColumnWidth(0, 400)   # tamaño cómodo
+self.tree.setColumnWidth(0, 500)   # muy ancha
+```
+
+4. Guarda el archivo y vuelve a ejecutar el programa.
+
+Esto solo cambia el **tamaño inicial**.
+Luego el usuario puede seguir ajustando el ancho de la columna con el mouse como en cualquier administrador de archivos.
+
+---
+
 ## Nota final
 
 Este programa fue creado para resolver un problema real:

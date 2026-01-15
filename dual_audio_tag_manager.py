@@ -149,6 +149,23 @@ class Panel(QWidget):
         self.tree.setRootIndex(self.model.index(self.model.rootPath()))
         self.tree.clicked.connect(self.on_select)
 
+        # Hacer que la columna "Name" sea grande
+        self.tree.setColumnWidth(0, 400)   # Name
+        self.tree.setColumnWidth(1, 80)    # Size
+        self.tree.setColumnWidth(2, 100)   # Type
+        self.tree.setColumnWidth(3, 120)   # Date Modified  
+
+        header = self.tree.header()
+        header.setStretchLastSection(False)
+
+        # Name grande por defecto, pero movible por el usuario
+        header.setSectionResizeMode(0, header.ResizeMode.Interactive)
+
+        # Las otras columnas fijas
+        header.setSectionResizeMode(1, header.ResizeMode.ResizeToContents)
+        header.setSectionResizeMode(2, header.ResizeMode.ResizeToContents)
+        header.setSectionResizeMode(3, header.ResizeMode.ResizeToContents)
+
         self.inspector = AudioInspector()
         self.inspector.cover.resizeEvent = lambda e: self.inspector.resize_cover()
 
