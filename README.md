@@ -120,9 +120,10 @@ python dual_audio_tag_manager.py
 ## 🐧 Cómo usarlo en Linux (MX Linux, Ubuntu, Debian, etc)
 
 ### 1️⃣ Instalar Python y pip
+python ya viene instalado en estos sistemas Linux, pero igual este es el comando:
 
 ```bash
-sudo apt install python3 python3-pip
+sudo apt install python3 
 ```
 
 ---
@@ -130,7 +131,7 @@ sudo apt install python3 python3-pip
 ### 2️⃣ Instalar las librerías
 
 ```bash
-pip install PyQt6 mutagen pillow
+sudo apt install python3-pyqt6 python3-mutagen python3-pillow
 ```
 
 ---
