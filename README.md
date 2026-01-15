@@ -13,7 +13,9 @@ Funciona con:
 - OGG  
 - M4A (AAC / ALAC)
 
-Y está pensada para trabajar con **dos paneles**, como un administrador de archivos tipo Krusader o Total Commander.
+Y está pensada para trabajar con **dos paneles**, como un administrador de archivos tipo Krusader o Total Commander:
+
+
 
 ---
 
