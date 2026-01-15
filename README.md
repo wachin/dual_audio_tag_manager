@@ -1,4 +1,4 @@
-# 🎵 Dual Audio Tag Manager
+# Dual Audio Tag Manager
 
 **Dual Audio Tag Manager** es una herramienta de escritorio diseñada para comparar y sincronizar carátulas y etiquetas (tags) entre dos colecciones de archivos de audio.
 
@@ -17,7 +17,7 @@ Y está pensada para trabajar con **dos paneles**, como un administrador de arch
 
 ---
 
-## 🧠 ¿Qué hace este programa?
+## ¿Qué hace este programa?
 
 El programa muestra:
 
@@ -39,7 +39,7 @@ Luego, con el botón **“Copiar portada”**, se puede copiar la imagen del lad
 
 ---
 
-## 🖥 Requisitos
+## Requisitos
 
 Necesitas tener instalado:
 
@@ -48,7 +48,7 @@ Necesitas tener instalado:
 
 ---
 
-## 📦 Librerías que usa el programa
+## Librerías que usa el programa
 
 El programa utiliza:
 
@@ -60,9 +60,9 @@ Se instalan automáticamente con `pip`.
 
 ---
 
-## 🪟 Cómo usarlo en Windows
+## Cómo usarlo en Windows
 
-### 1️⃣ Instalar Python
+### 1.- Instalar Python
 
 Descárgalo de:
 
@@ -73,7 +73,7 @@ Durante la instalación marca:
 
 ---
 
-### 2️⃣ Abrir la consola
+### 2.- Abrir la consola
 Presiona:
 
 ```
@@ -90,7 +90,7 @@ y presiona Enter.
 
 ---
 
-### 3️⃣ Ir a la carpeta del programa
+### 3.- Ir a la carpeta del programa
 Ejemplo:
 
 ```bash
@@ -101,7 +101,7 @@ cd C:\PortableApps\dual_tag_editor
 
 ---
 
-### 4️⃣ Instalar las librerías
+### 4.- Instalar las librerías
 
 ```bash
 pip install PyQt6 mutagen pillow
@@ -109,7 +109,7 @@ pip install PyQt6 mutagen pillow
 
 ---
 
-### 5️⃣ Ejecutar el programa
+### 5.- Ejecutar el programa
 
 ```bash
 python dual_audio_tag_manager.py
@@ -117,9 +117,9 @@ python dual_audio_tag_manager.py
 
 ---
 
-## 🐧 Cómo usarlo en Linux (MX Linux, Ubuntu, Debian, etc)
+## Cómo usarlo en Linux (MX Linux, Ubuntu, Debian, etc)
 
-### 1️⃣ Instalar Python y pip
+### 1.- Instalar Python y pip
 python ya viene instalado en estos sistemas Linux, pero igual este es el comando:
 
 ```bash
@@ -128,7 +128,7 @@ sudo apt install python3
 
 ---
 
-### 2️⃣ Instalar las librerías
+### 2.- Instalar las librerías
 
 ```bash
 sudo apt install python3-pyqt6 python3-mutagen python3-pillow
@@ -136,7 +136,7 @@ sudo apt install python3-pyqt6 python3-mutagen python3-pillow
 
 ---
 
-### 3️⃣ Ejecutar el programa
+### 3.- Ejecutar el programa
 
 Ve a la carpeta donde está el archivo y ejecuta:
 
@@ -146,7 +146,7 @@ python dual_audio_tag_manager.py
 
 ---
 
-## 🗂 Dónde guarda la configuración
+## Dónde guarda la configuración
 
 El programa recuerda:
 
@@ -163,7 +163,7 @@ Esto se guarda automáticamente:
 
 ---
 
-## 📜 Licencia
+## Licencia
 
 Este programa es **Software Libre** bajo licencia:
 
@@ -178,14 +178,14 @@ Puedes:
 
 ---
 
-## 👨‍💻 Desarrollador
+## Desarrollador
 
 **Washington Indacochea Delgado**
 📧 [linuxfrontier@proton.me](mailto:linuxfrontier@proton.me)
 
 ---
 
-## ❤️ Nota final
+## Nota final
 
 Este programa fue creado para resolver un problema real:
 
