@@ -15,6 +15,7 @@ Funciona con:
 
 Y está pensada para trabajar con **dos paneles**, como un administrador de archivos tipo Krusader o Total Commander:
 
+![01-Dual-Audio-tag-manager.png](https://github.com/wachin/dual_audio_tag_manager/blob/main/images/01-Dual-Audio-tag-manager.png?raw=true)
 
 
 ---
