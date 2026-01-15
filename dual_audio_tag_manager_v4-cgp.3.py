@@ -14,6 +14,16 @@ from PyQt6.QtCore import QTimer
 
 AUDIO_EXT = (".mp3", ".flac", ".ogg", ".m4a")
 
+# ---------- get_settings() como función global -------------
+
+def get_settings():
+    return QSettings(
+        QSettings.Format.IniFormat,
+        QSettings.Scope.UserScope,
+        "DualAudioTagManager",
+        "DualAudioTagManager"
+    )
+
 # ------------------ TAGS ------------------
 
 def get_tags(audio, path):
@@ -319,6 +329,9 @@ GPL 3
 class MainWindow(QWidget):
     def __init__(self):
         super().__init__()
+
+        self.settings = get_settings()
+
         self.setWindowTitle("Dual Audio Tag Manager")
 
         self.left = Panel()
@@ -345,16 +358,6 @@ class MainWindow(QWidget):
         main = QVBoxLayout(self)
         main.setMenuBar(menu)
         main.addLayout(content)
-
-        config_dir = QSettings().fileName()
-        config_path = os.path.join(os.path.dirname(config_dir), "DualAudioTagManager")
-
-        os.makedirs(config_path, exist_ok=True)
-
-        self.settings = QSettings(
-            os.path.join(config_path, "settings.ini"),
-            QSettings.Format.IniFormat
-        )
 
         self.left.pending_scroll = int(self.settings.value("left_scroll", 0))
         self.right.pending_scroll = int(self.settings.value("right_scroll", 0))
