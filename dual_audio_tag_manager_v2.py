@@ -10,6 +10,8 @@ from mutagen import File
 from mutagen.id3 import ID3, APIC
 from mutagen.flac import Picture
 
+from PyQt6.QtCore import QTimer
+
 AUDIO_EXT = (".mp3", ".flac", ".ogg", ".m4a")
 
 # ------------------ TAGS ------------------
@@ -141,6 +143,7 @@ class Panel(QWidget):
 
         self.model = QFileSystemModel()
         self.model.setRootPath("")
+        self.model.directoryLoaded.connect(self.on_directory_loaded)
         self.model.setNameFilters(["*.mp3","*.flac","*.ogg","*.m4a"])
         self.model.setNameFilterDisables(False)
 
@@ -186,6 +189,11 @@ class Panel(QWidget):
 
         layout = QVBoxLayout(self)
         layout.addWidget(self.splitter)
+
+    def on_directory_loaded(self, path):
+        if hasattr(self, "pending_scroll"):
+            self.tree.verticalScrollBar().setValue(self.pending_scroll)
+            del self.pending_scroll
 
     def on_select(self, index):
         path = self.model.filePath(index)
@@ -275,6 +283,10 @@ class MainWindow(QWidget):
         main.addLayout(content)
 
         self.settings = QSettings("Washington", "DualAudioTagManager")
+
+        self.left.pending_scroll = int(self.settings.value("left_scroll", 0))
+        self.right.pending_scroll = int(self.settings.value("right_scroll", 0))
+
         self.restoreGeometry(self.settings.value("main_geometry", b""))
         self.left.splitter.restoreState(self.settings.value("left_split", b""))
         self.right.splitter.restoreState(self.settings.value("right_split", b""))
@@ -282,10 +294,24 @@ class MainWindow(QWidget):
         self.left.restore_columns(self.settings, "left")
         self.right.restore_columns(self.settings, "right")
 
-        for side, panel in [("left",self.left),("right",self.right)]:
-            root = self.settings.value(f"{side}_root","")
-            if root:
-                panel.tree.setRootIndex(panel.model.index(root))
+        for side, panel in [("left", self.left), ("right", self.right)]:
+            path = self.settings.value(f"{side}_root", "")
+            if path:
+                idx = panel.model.index(path)
+                panel.tree.setCurrentIndex(idx)
+                panel.tree.scrollTo(idx)
+
+        # aplicar scroll DESPUÉS de que Qt termine de posicionar la vista
+        QTimer.singleShot(0, self.restore_scroll)
+
+    def restore_scroll(self):
+        left = self.settings.value("left_scroll")
+        right = self.settings.value("right_scroll")
+
+        if left is not None:
+            self.left.tree.verticalScrollBar().setValue(int(left))
+        if right is not None:
+            self.right.tree.verticalScrollBar().setValue(int(right))
 
     def set_cover_size(self, size):
         for p in (self.left, self.right):
@@ -296,8 +322,18 @@ class MainWindow(QWidget):
         self.settings.setValue("main_geometry", self.saveGeometry())
         self.settings.setValue("left_split", self.left.splitter.saveState())
         self.settings.setValue("right_split", self.right.splitter.saveState())
-        self.settings.setValue("left_root", self.left.model.filePath(self.left.tree.rootIndex()))
-        self.settings.setValue("right_root", self.right.model.filePath(self.right.tree.rootIndex()))
+
+        # Guardar la carpeta actualmente seleccionada
+        left_index = self.left.tree.currentIndex()
+        right_index = self.right.tree.currentIndex()
+
+        self.settings.setValue("left_root", self.left.model.filePath(left_index))
+        self.settings.setValue("right_root", self.right.model.filePath(right_index))
+
+        # Guardar posición de scroll
+        self.settings.setValue("left_scroll", self.left.tree.verticalScrollBar().value())
+        self.settings.setValue("right_scroll", self.right.tree.verticalScrollBar().value())
+
         e.accept()
 
         self.left.save_columns(self.settings, "left")
