@@ -192,6 +192,16 @@ class Panel(QWidget):
         self.current_file = path
         self.inspector.show_audio(path)
 
+    def save_columns(self, settings, prefix):
+        header = self.tree.header()
+        settings.setValue(prefix + "_name_width", header.sectionSize(0))
+
+    def restore_columns(self, settings, prefix):
+        w = settings.value(prefix + "_name_width")
+        if w:
+            self.tree.setColumnWidth(0, int(w))
+
+
 # ------------------ About ------------------
 
 from PyQt6.QtWidgets import QDialog
@@ -269,6 +279,9 @@ class MainWindow(QWidget):
         self.left.splitter.restoreState(self.settings.value("left_split", b""))
         self.right.splitter.restoreState(self.settings.value("right_split", b""))
 
+        self.left.restore_columns(self.settings, "left")
+        self.right.restore_columns(self.settings, "right")
+
         for side, panel in [("left",self.left),("right",self.right)]:
             root = self.settings.value(f"{side}_root","")
             if root:
@@ -286,6 +299,9 @@ class MainWindow(QWidget):
         self.settings.setValue("left_root", self.left.model.filePath(self.left.tree.rootIndex()))
         self.settings.setValue("right_root", self.right.model.filePath(self.right.tree.rootIndex()))
         e.accept()
+
+        self.left.save_columns(self.settings, "left")
+        self.right.save_columns(self.settings, "right")
 
     def copy_cover(self):
         src = getattr(self.left,"current_file",None)
